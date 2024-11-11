@@ -1,0 +1,245 @@
+# /packages/intranet-git-releases/tcl/intranet-git-procs.tcl
+#
+# Copyright (C) 1998-2023
+#
+
+ad_library {
+    Library handling a "packages" GIT repo with releases of the
+    included packages as GIT submodules
+    @author frank.bergmann@project-open.com
+}
+
+# ----------------------------------------------------------------------
+# Components
+# ---------------------------------------------------------------------
+
+ad_proc -public im_git_status_component {
+    {-max_entries 8}
+} {
+    Checks the GIT status of the current server.
+    Assumes that the /packages/ folder is a GIT repo
+    with the ]po[ packages as submodules.
+    @param max_entries Limit the number of entries in the portlet
+} {
+    set params [list \
+		    [list max_entries $max_entries] \
+    ]
+    set result [ad_parse_template -params $params "/packages/intranet-git-releases/lib/git-status"]
+    return [string trim $result]
+}
+
+
+# ----------------------------------------------------------------------
+# Procedures to process GIT
+# ---------------------------------------------------------------------
+
+ad_proc im_git_parse_commit_log {
+    -repo_path
+    {-from_hash ""}
+    {-to_hash ""}
+    {-limit 10}
+    {-debug_p 0}
+} {
+    Runs "git log" in the repo_path and returns a list of hash-lists 
+    with information about the commits in the repo. 
+    The commits can be "releases" when running in the /packages/ folder
+    or just commits in one of the packages.<br>
+    Example input:
+    <pre>
+    commit 4fab079cc341d42bca3cc69c715885ce387caadc
+    Author:     Frank Bergmann <frank.bergmann@project-open.com>
+    AuthorDate: 2024-10-31 13:11:29 +0100
+    Commit:     Frank Bergmann <frank.bergmann@project-open.com>
+    CommitDate: 2024-10-31 13:11:29 +0100
+
+        cosine #5973: Added new GIT status portlet.
+        This is a test with a second line of the commit
+
+    commit next commit
+    </pre>
+    Example output:
+    {
+	commit_hash "4fab079cc341d42bca3cc69c715885ce387caadc"
+	author "Frank Bergmann <frank.bergmann@project-open.com>"
+	authordate "2024-10-31 13:11:29 +0100"
+	commit "Frank Bergmann <frank.bergmann@project-open.com>"
+	commitdate "2024-10-31 13:11:29 +0100"
+	comment "cosine #5973: Added new GIT status portlet.\nThis is a test with a second line of the commit"
+    }
+} {
+    set cosine_tracker_url "https://int.cosine.nl/bugtracker/view.php"
+
+    set releases [list]
+    set commit [list]
+
+    set limit_cmd ""; if {"" ne $limit} { set limit_cmd "-n $limit" }
+    set from_cmd ""; if {"" ne $from_hash} { set from_cmd $from_hash }
+    set to_cmd ""; if {"" ne $to_hash} { set to_cmd "..$to_hash" }
+
+    set git_cmd "git log $limit_cmd --format=fuller --no-merges --no-decorate --date=iso8601 $from_cmd$to_cmd"
+    ns_log Notice "im_git_parse_commit_log: git_cmd='cd $repo_path; $git_cmd'"
+    set output [im_exec bash -c "cd $repo_path; $git_cmd"]
+    set release_hash_list [list]
+    set release_comment ""
+    foreach line [split $output "\n"] {
+	if {$debug_p} { ns_log Notice "im_git_releases: line=$line" }
+
+	# --------------------------------------------------------------------
+	# Convert a stream of lines into a stream of tokens with $rest_of_line
+	# A commit entry starts with a "commit xyz" line and ends with the "commit yzw" 
+	# line of the next entry, or the end of the file
+	set token "undefined"
+	if {"" eq $line} {
+	    # An empty line
+	    set token "empty"
+	    set rest_of_line ""
+	} elseif {[regexp {^(\S{6,11})\s+(.*)} $line match token rest_of_line]} {
+	    # A line starting with a keyword, followed by a space and the rest
+	    if {[regexp {^(\w+)\:$} $token match word]} { 
+		# The token had a ":" as the last character, just skip
+		set token $word 
+	    }
+	} elseif {[regexp {^(\s{4})(.*)} $line match spaces rest_of_line]} {
+	    # A comment line has four spaces followed by the comment
+	    set token "comment"
+	} else {
+	    # These are lines that don't match any of the above types.
+	    # This should never appear
+	    set token "failed"
+	    set rest_of_line $line
+	}
+	if {$debug_p} { ns_log Notice "im_git_releases: token=$token, rol=$rest_of_line" }
+
+	if {"empty" eq $token} { 
+	    continue 
+	}
+	if {"comment" eq $token} { 
+	    # We can have multi-line comments, so collect them here
+	    if {[regexp {^\- (.*)$} $rest_of_line match line_without_dash]} { set rest_of_line $line_without_dash}
+	    append release_comment "[ns_quotehtml $rest_of_line]<br>"
+	    continue 
+	}
+	if {"commit" eq $token} {
+	    set token "commit_hash"
+	    # This is either the very first commit or something in between
+	    # The first commit is empty, so ignore that one
+	    if {[llength $release_hash_list] > 0} {
+		if {$debug_p} { ns_log Notice "im_git_releases: found 'commit' token and l>0" }
+		# Add the old release to the list of results
+		lappend release_hash_list "comment"
+
+		# Check for (one) "cosine #1234:" reference and replace with reference to bug tracker
+		if {[regexp {^(.*)cosine #?([0-9]{3,5}):?(.*)$} $release_comment match start bug_id end]} {
+		    set tracker_url [export_vars -base $cosine_tracker_url {{id $bug_id}}]
+		    set tracker_link "<a href='$tracker_url'>cosine issue #$bug_id:</a>"
+		    set release_comment "${start}${tracker_link}${end}"
+		}
+
+		lappend release_hash_list $release_comment
+		lappend releases $release_hash_list
+	    }
+
+	    # Start a new release with an empty hash_list
+	    set release_hash_list [list]
+	    set release_comment ""
+	} else {
+	    if {$debug_p} { ns_log Notice "im_git_releases: found some other token" }
+	}
+
+	# Add the current line to the next release
+	lappend release_hash_list [string tolower $token]
+	lappend release_hash_list $rest_of_line
+
+	# --------------------------------------------------------------------
+	# Process some of the entries
+	# ns_log Notice "im_git_parse_logs: token=$token"
+	switch [string tolower $token] {
+	    "commit_hash" {
+		# Set short version of the hash
+		set commit_hash_short [string toupper [string range $rest_of_line 0 6]]
+		lappend release_hash_list "commit_hash_short" $commit_hash_short
+	    }
+	    "commitdate" {
+		# Massage the date, take only the first 10 chars "2024-10-31"
+		set commitdate_iso [string range $rest_of_line 0 15]
+		lappend release_hash_list "commitdate_iso" $commitdate_iso
+	    }
+	    "author" {
+		# Quote author, it contains <...>
+		set author_quoted [ns_quotehtml $rest_of_line]
+		lappend release_hash_list "author_quoted" $author_quoted
+	    }
+	}
+    }
+    
+    # After the end of the entire list, like a start of a new commit line
+    # Add the last release to the list of results
+    lappend release_hash_list "comment"
+    lappend release_hash_list $release_comment
+    lappend releases $release_hash_list
+
+    # Return a hash-list of releases
+    return $releases
+}
+
+
+ad_proc im_git_parse_submodule_diff {
+    -repo_path
+    -from_hash
+    -to_hash
+    {-debug_p 1}
+} {
+    Gets the difference between two releases in terms of submodules.
+    Runs "git diff $from_hash $to_hash" in the packages repo in order
+    to get he old and new commit hashes for each submodule.
+    
+    The result of the diff looks like this:
+    diff --git a/.gitignore b/.gitignore
+
+    deleted file mode 100644
+    index 51176e7..0000000
+    --- a/.gitignore
+    +++ /dev/null
+    @@ -1,12 +0,0 @@
+    -emacs.bash
+    diff --git a/intranet-git-releases b/intranet-git-releases
+    index a417e75..9183b8e 160000
+    --- a/intranet-git-releases
+    +++ b/intranet-git-releases
+    @@ -1 +1 @@
+    -Subproject commit a417e75cad2ea6e013aecade387c34d4e0ee2a5e
+    +Subproject commit 9183b8ee134577d7242646466242f2f075155870
+
+    However, we are only interested in the lines:
+    diff --git a/intranet-git-releases b/intranet-git-releases
+    -Subproject commit xyz
+    +Subproject commit vwx
+
+    Returns a list of tuples: { intranet-git-releases a417e75 9183b8e }
+} {
+    set results [list]
+    set git_cmd "git diff $from_hash $to_hash"
+    ns_log Notice "im_git_parse_submodule_diff: git_cmd=$git_cmd"
+    set output [im_exec bash -c "cd $repo_path; $git_cmd"]
+
+    set pack ""
+    set pack_from_hash ""
+    set pack_to_hash ""
+    foreach line [split $output "\n"] {
+	if {$debug_p} { ns_log Notice "im_git_parse_submodule_diff: line=$line" }
+
+	if {[regexp {^\-{3} [ab]\/([a-z0-9_\-]+)$} $line match p]} { set pack $p}
+	if {[regexp {^\-Subproject commit ([a-z0-9]+)$} $line match s]} { set pack_from_hash $s}
+	if {[regexp {^\+Subproject commit ([a-z0-9]+)$} $line match s]} { 
+	    set pack_to_hash $s
+	    lappend results [list $pack $pack_from_hash $pack_to_hash]
+	    set pack ""
+	    set pack_from_hash ""
+	    set pack_to_hash ""
+	}
+
+	if {$debug_p} { ns_log Notice "im_git_parse_submodule_diff: pack=$pack, from=$pack_from_hash, to=$pack_to_hash" }
+    }
+    return $results
+}
+
