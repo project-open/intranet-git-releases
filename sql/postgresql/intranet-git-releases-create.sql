@@ -11,7 +11,7 @@ SELECT im_component_plugin__new (
 	null, 'im_component_plugin', now(), null, null, null,
 	'GIT Releases',				-- plugin_name
 	'intranet-git-releases',		-- package_name
-	'left',					-- location
+	'bottom',				-- location
 	'/intranet/index',			-- page_url
 	null,					-- view_name
 	1900,					-- sort_order

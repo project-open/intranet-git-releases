@@ -221,6 +221,7 @@ ad_proc im_git_parse_submodule_diff {
     set git_cmd "git diff $from_hash $to_hash"
     ns_log Notice "im_git_parse_submodule_diff: git_cmd=$git_cmd"
     set output [im_exec bash -c "cd $repo_path; $git_cmd"]
+    ns_log Notice "im_git_parse_submodule_diff: output=$output"
 
     set pack ""
     set pack_from_hash ""
@@ -228,7 +229,7 @@ ad_proc im_git_parse_submodule_diff {
     foreach line [split $output "\n"] {
 	if {$debug_p} { ns_log Notice "im_git_parse_submodule_diff: line=$line" }
 
-	if {[regexp {^\-{3} [ab]\/([a-z0-9_\-]+)$} $line match p]} { set pack $p}
+	if {[regexp {^\+{3} [ab]\/([a-z0-9_\-]+)$} $line match p]} { set pack $p}
 	if {[regexp {^\-Subproject commit ([a-z0-9]+)$} $line match s]} { set pack_from_hash $s}
 	if {[regexp {^\+Subproject commit ([a-z0-9]+)$} $line match s]} { 
 	    set pack_to_hash $s
