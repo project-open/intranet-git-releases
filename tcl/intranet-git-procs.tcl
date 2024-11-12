@@ -13,7 +13,7 @@ ad_library {
 # Components
 # ---------------------------------------------------------------------
 
-ad_proc -public im_git_status_component {
+ad_proc -public im_git_releases_component {
     {-max_entries 8}
 } {
     Checks the GIT status of the current server.
