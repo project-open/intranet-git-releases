@@ -4,7 +4,10 @@
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Date "Date"] %></td>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Hash "Hash"] %></td>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Release "Release"] %></td>
-	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Commits "Commits"] %></td>
+	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Included_Commits "Included Commits"] %></td>
+<if @debug@ eq 1>
+	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Debug "Debug"] %></td>
+</if>
 	  </tr>
 	</thead>	  
 	<tbody>
@@ -15,6 +18,11 @@
 		<td valign=top>@releases_multirow.hash@</td>
 		<td valign=top>@releases_multirow.notes;noquote@</td>
 		<td valign=top>@releases_multirow.details;noquote@</td>
+
+<if @debug@ eq 1>
+		<td valign=top>@releases_multirow.debug@</td>
+</if>
+
 	    </tr>
 	  </multiple>
 

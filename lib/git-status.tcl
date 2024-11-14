@@ -16,6 +16,7 @@
 # Variables:
 #	max_entries Maximum number of entries in portlet
 
+set debug 0
 set user_id [auth::require_login]
 set release_url "/intranet-git-releases/releases"
 
@@ -23,15 +24,15 @@ set root_dir [acs_root_dir]
 set packages_dir "$root_dir/packages"; # no trailing /
 # No permissions here, set perms on portlet
 
+
 # ----------------------------------------------------
 # Create a "multirow" to show the results
-
-multirow create releases_multirow date hash author notes view_url details
+multirow create releases_multirow date hash author notes view_url details debug
 
 # get a list of hash-lists for each release
 set release_vars {commit_hash commit_hash_short commitdate_iso author author_quoted commit commitdate comment}
 set releases_lohl [util_memoize [list im_git_parse_commit_log -repo_path $packages_dir -debug_p 0 -limit $max_entries]]
-# ad_return_complaint 1 "<pre>[join $releases_lohl "<br>"]</pre>"
+# ad_return_complaint 1 "releases_lohl:<br><pre>[join $releases_lohl "<br>"]</pre>"
 
 set ctr 0
 set continue 1
@@ -42,7 +43,7 @@ while {$ctr <= $max_entries} {
     if {0 == [llength $release]} { break }
     set next_release [lindex $releases_lohl [expr $ctr + 1]]
     incr ctr
-    ns_log Notice "git-status: release=$release"
+    ns_log Notice "git-status: ctr=$ctr, release=$release, next_release=$next_release"
 
     array unset release_h
     array unset next_release_h
@@ -64,8 +65,11 @@ while {$ctr <= $max_entries} {
     set details ""
     if {"" ne $next_release} {
 	set next_release_hash $next_release_h(commit_hash)
+	set release_comment $next_release_h(comment)
 	# Get a list of all packages modified, with from and to hash
 	set packages_diffs [util_memoize [list im_git_parse_submodule_diff -repo_path $packages_dir -from_hash $next_release_hash -to_hash $commit_hash]]
+	# ad_return_complaint 1 $packages_diffs
+
 	foreach package_diff $packages_diffs {
 	    set pack [lindex $package_diff 0]
 	    set pack_from_hash [lindex $package_diff 1]
@@ -83,10 +87,10 @@ while {$ctr <= $max_entries} {
 		# append details "$comment"
 	    }
 	}
-    }
 
-    set url [export_vars -base $release_url {}]
-    multirow append releases_multirow $commitdate_iso $commit_hash_short $author $comment $url $details
+	set url [export_vars -base $release_url {}]
+	multirow append releases_multirow $commitdate_iso $commit_hash_short $author $release_comment $url $details $next_release
+    }
 }
 
 # ad_return_complaint 1 [im_git_releases]
