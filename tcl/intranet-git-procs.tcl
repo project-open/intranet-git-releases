@@ -38,7 +38,7 @@ ad_proc im_git_parse_commit_log {
     {-from_hash ""}
     {-to_hash ""}
     {-limit 10}
-    {-debug_p 0}
+    {-debug_p 1}
 } {
     Runs "git log" in the repo_path and returns a list of hash-lists 
     with information about the commits in the repo. 
@@ -69,20 +69,26 @@ ad_proc im_git_parse_commit_log {
 } {
     set cosine_tracker_url "https://int.cosine.nl/bugtracker/view.php"
 
-    set releases [list]
+    set commits [list]
     set commit [list]
 
     set limit_cmd ""; if {"" ne $limit} { set limit_cmd "-n $limit" }
     set from_cmd ""; if {"" ne $from_hash} { set from_cmd $from_hash }
     set to_cmd ""; if {"" ne $to_hash} { set to_cmd "..$to_hash" }
 
+    ns_log Notice "im_git_parse_commit_log: repo_path=$repo_path, from=$from_hash, to=$to_hash"
     set git_cmd "git log $limit_cmd --format=fuller --no-merges --no-decorate --date=iso8601 $from_cmd$to_cmd"
     ns_log Notice "im_git_parse_commit_log: git_cmd='cd $repo_path; $git_cmd'"
     set output [im_exec bash -c "cd $repo_path; $git_cmd"]
+    append output "\ncommit end"
+    ns_log Notice "im_git_parse_commit_log: output:\nim_git_parse_commit_log: output: [join [split $output "\n"] "\nim_git_parse_commit_log: output: "]"
+    if {$debug_p} { ns_log Notice "im_git_parse_commit_log: output=\n$output" }
     set release_hash_list [list]
     set release_comment ""
+    set cnt 0
     foreach line [split $output "\n"] {
-	if {$debug_p} { ns_log Notice "im_git_releases: line=$line" }
+	incr cnt
+	if {$debug_p} { ns_log Notice "im_git_parse_commit_log: #$cnt: line=$line" }
 
 	# --------------------------------------------------------------------
 	# Convert a stream of lines into a stream of tokens with $rest_of_line
@@ -108,7 +114,7 @@ ad_proc im_git_parse_commit_log {
 	    set token "failed"
 	    set rest_of_line $line
 	}
-	if {$debug_p} { ns_log Notice "im_git_releases: token=$token, rol=$rest_of_line" }
+	if {$debug_p} { ns_log Notice "im_git_parse_commit_log: #$cnt: token=$token, rol=$rest_of_line" }
 
 	if {"empty" eq $token} { 
 	    continue 
@@ -120,11 +126,12 @@ ad_proc im_git_parse_commit_log {
 	    continue 
 	}
 	if {"commit" eq $token} {
+	    if {$debug_p} { ns_log Notice "im_git_parse_commit_log: #$cnt: found commit: release_hash_list=$release_hash_list" }
 	    set token "commit_hash"
 	    # This is either the very first commit or something in between
 	    # The first commit is empty, so ignore that one
 	    if {[llength $release_hash_list] > 0} {
-		if {$debug_p} { ns_log Notice "im_git_releases: found 'commit' token and l>0" }
+		if {$debug_p} { ns_log Notice "im_git_parse_commit_log: #$cnt: found 'commit' token and l>0" }
 		# Add the old release to the list of results
 		lappend release_hash_list "comment"
 
@@ -136,14 +143,16 @@ ad_proc im_git_parse_commit_log {
 		}
 
 		lappend release_hash_list $release_comment
-		lappend releases $release_hash_list
+		lappend commits $release_hash_list
+	    } else {
+		if {$debug_p} { ns_log Notice "im_git_parse_commit_log: #$cnt: found 'commit', but there are not data yet (first commit)" }
 	    }
 
 	    # Start a new release with an empty hash_list
 	    set release_hash_list [list]
 	    set release_comment ""
 	} else {
-	    if {$debug_p} { ns_log Notice "im_git_releases: found some other token" }
+	    if {$debug_p} { ns_log Notice "im_git_parse_commit_log: #$cnt: found some other token" }
 	}
 
 	# Add the current line to the next release
@@ -152,7 +161,7 @@ ad_proc im_git_parse_commit_log {
 
 	# --------------------------------------------------------------------
 	# Process some of the entries
-	# ns_log Notice "im_git_parse_logs: token=$token"
+	ns_log Notice "im_git_parse_commit_log: #$cnt: token=$token"
 	switch [string tolower $token] {
 	    "commit_hash" {
 		# Set short version of the hash
@@ -171,15 +180,16 @@ ad_proc im_git_parse_commit_log {
 	    }
 	}
     }
-    
+
+    # No need to add the last commit, because it was added manually above
     # After the end of the entire list, like a start of a new commit line
     # Add the last release to the list of results
-    lappend release_hash_list "comment"
-    lappend release_hash_list $release_comment
-    lappend releases $release_hash_list
+    # lappend release_hash_list "comment"
+    # lappend release_hash_list $release_comment
+    # lappend commits $release_hash_list
 
-    # Return a hash-list of releases
-    return $releases
+    # Return a hash-list of commits
+    return $commits
 }
 
 
@@ -221,7 +231,7 @@ ad_proc im_git_parse_submodule_diff {
     set git_cmd "git diff $from_hash $to_hash"
     ns_log Notice "im_git_parse_submodule_diff: git_cmd=$git_cmd"
     set output [im_exec bash -c "cd $repo_path; $git_cmd"]
-    ns_log Notice "im_git_parse_submodule_diff: output=$output"
+    ns_log Notice "im_git_parse_submodule_diff: output=\n$output"
 
     set pack ""
     set pack_from_hash ""

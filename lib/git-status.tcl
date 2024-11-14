@@ -43,7 +43,6 @@ while {$ctr <= $max_entries} {
     set next_release [lindex $releases_lohl [expr $ctr + 1]]
     incr ctr
     ns_log Notice "git-status: release=$release"
-    ns_log Notice "git-status: next_release=$next_release"
 
     array unset release_h
     array unset next_release_h
@@ -74,7 +73,9 @@ while {$ctr <= $max_entries} {
 	    set pack_to_hash [lindex $package_diff 2]
 
 	    set repo_path "$root_dir/packages/$pack";
+	    ns_log Notice "git-status: im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash"
 	    set pack_logs [im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash]
+	    ns_log Notice "git-status: im_git_parse_commit_log: $pack_logs"
 	    foreach pack_log $pack_logs {
 		array unset log_hash
 		array set log_hash $pack_log
