@@ -30,7 +30,7 @@ multirow create releases_multirow date hash author notes view_url details
 
 # get a list of hash-lists for each release
 set release_vars {commit_hash commit_hash_short commitdate_iso author author_quoted commit commitdate comment}
-set releases_lohl [im_git_parse_commit_log -repo_path $packages_dir -debug_p 0 -limit $max_entries]
+set releases_lohl [util_memoize [list im_git_parse_commit_log -repo_path $packages_dir -debug_p 0 -limit $max_entries]]
 # ad_return_complaint 1 "<pre>[join $releases_lohl "<br>"]</pre>"
 
 set ctr 0
@@ -49,7 +49,6 @@ while {$ctr <= $max_entries} {
     array set release_h $release
     array set next_release_h $next_release
 
-
     # Write release variables to local variables
     foreach var $release_vars {
 	set val "undefined"
@@ -66,7 +65,7 @@ while {$ctr <= $max_entries} {
     if {"" ne $next_release} {
 	set next_release_hash $next_release_h(commit_hash)
 	# Get a list of all packages modified, with from and to hash
-	set packages_diffs [im_git_parse_submodule_diff -repo_path $packages_dir -from_hash $next_release_hash -to_hash $commit_hash]
+	set packages_diffs [util_memoize [list im_git_parse_submodule_diff -repo_path $packages_dir -from_hash $next_release_hash -to_hash $commit_hash]]
 	foreach package_diff $packages_diffs {
 	    set pack [lindex $package_diff 0]
 	    set pack_from_hash [lindex $package_diff 1]
@@ -74,7 +73,7 @@ while {$ctr <= $max_entries} {
 
 	    set repo_path "$root_dir/packages/$pack";
 	    ns_log Notice "git-status: im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash"
-	    set pack_logs [im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash]
+	    set pack_logs [util_memoize [list im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash]]
 	    ns_log Notice "git-status: im_git_parse_commit_log: $pack_logs"
 	    foreach pack_log $pack_logs {
 		array unset log_hash
