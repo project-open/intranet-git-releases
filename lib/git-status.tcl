@@ -51,6 +51,7 @@ while {$ctr <= $max_entries} {
     array set next_release_h $next_release
 
     # Write release variables to local variables
+    set release_comment $release_h(comment)
     foreach var $release_vars {
 	set val "undefined"
 	if {[info exists release_h($var)]} { set val $release_h($var) }
@@ -58,14 +59,15 @@ while {$ctr <= $max_entries} {
     }
 
     # Shows GIT details for debugging
-    # set details ""
+    set details ""
     # foreach var $release_vars { append details "<li>$var: $release_h($var)\n" }
 
     # Get the difference between each two releases
-    set details ""
     if {"" ne $next_release} {
 	set next_release_hash $next_release_h(commit_hash)
-	set release_comment $next_release_h(comment)
+	set next_release_comment $next_release_h(comment)
+	# append details "<li>from_hash: $commit_hash</li><li>to_hash: $next_release_hash</li>\n"
+
 	# Get a list of all packages modified, with from and to hash
 	set packages_diffs [util_memoize [list im_git_parse_submodule_diff -repo_path $packages_dir -from_hash $next_release_hash -to_hash $commit_hash]]
 	# ad_return_complaint 1 $packages_diffs
