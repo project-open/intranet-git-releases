@@ -15,6 +15,7 @@ ad_library {
 
 ad_proc -public im_git_releases_component {
     {-max_entries 8}
+    {-show_commits_p 0}
 } {
     Checks the GIT status of the current server.
     Assumes that the /packages/ folder is a GIT repo
@@ -23,6 +24,7 @@ ad_proc -public im_git_releases_component {
 } {
     set params [list \
 		    [list max_entries $max_entries] \
+		    [list show_commits_p $show_commits_p] \
     ]
     set result [ad_parse_template -params $params "/packages/intranet-git-releases/lib/git-status"]
     return [string trim $result]

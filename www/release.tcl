@@ -1,21 +1,28 @@
 # -------------------------------------------------------------
-# /packages/intranet-git-releases/lib/git-status.tcl
+# /packages/intranet-git-releases/www/releases.tcl
 #
 # Copyright (c) 2024 ]project-open[
 # All rights reserved.
 #
 # Author: frank.bergmann@project-open.com
 
-# -------------------------------------------------------------
-# Shows the status of the system to all users.
-# - Releases are commits to /packages/ which are created after
-#   releasing a new "configuration" (list of package versions) 
-#   to the server.
-# - Versions are the specific versions of a package.
+# ---------------------------------------------------------------
+# Page Contract
+# ---------------------------------------------------------------
 
-# Variables:
-#	max_entries Maximum number of entries in portlet
-#	show_commits_p Show the 4th column with detailed commit information?
+ad_page_contract {
+    New page is basic...
+    @author all@devcon.project-open.com
+} {
+    release_hash
+    { max_entries 999999}
+}
+
+set filter_hash $release_hash
+
+set page_title "Release #$filter_hash"
+set context_bar [im_context_bar $page_title]
+
 
 set debug 0
 set user_id [auth::require_login]
@@ -23,12 +30,7 @@ set release_url "/intranet-git-releases/release"
 
 set root_dir [acs_root_dir]
 set packages_dir "$root_dir/packages"; # no trailing /
-# No permissions here, set perms on portlet
 
-
-# ----------------------------------------------------
-# Create a "multirow" to show the results
-multirow create releases_multirow date hash author notes view_url details debug
 
 # get a list of hash-lists for each release
 set release_vars {commit_hash commit_hash_short commitdate_iso author author_quoted commit commitdate comment}
@@ -65,7 +67,7 @@ while {$ctr <= $max_entries} {
     # foreach var $release_vars { append details "<li>$var: $release_h($var)\n" }
 
     # Get the difference between each two releases
-    if {"" ne $next_release} {
+    if {"" ne $next_release && $release_hash eq $filter_hash} {
 	set next_release_hash $next_release_h(commit_hash)
 	set next_release_comment $next_release_h(comment)
 	# append details "<li>from_hash: $commit_hash</li><li>to_hash: $next_release_hash</li>\n"
@@ -93,8 +95,14 @@ while {$ctr <= $max_entries} {
 	}
 
 	set url [export_vars -base $release_url {release_hash}]
-	multirow append releases_multirow $commitdate_iso $commit_hash_short $author $release_comment $url $details $next_release
+	ns_log Notice "release.tcl: release=$release, details=$details"
+	break
     }
 }
 
-# ad_return_complaint 1 [im_git_releases]
+# ad_return_complaint 1 [array get release_h]
+
+set commit_date $release_h(commitdate_iso)
+set commit_hash $release_h(commit_hash)
+
+

@@ -17,3 +17,15 @@ SELECT im_component_plugin__new (
 	1900,					-- sort_order
 	'im_git_releases_component'		-- component_tcl
 );
+
+
+SELECT im_component_plugin__new (
+	null, 'im_component_plugin', now(), null, null, null,
+	']po[ Version',				-- plugin_name
+	'intranet-git-releases',		-- package_name
+	'bottom',				-- location
+	'/index',				-- page_url
+	null,					-- view_name
+	100,					-- sort_order
+	'im_git_releases_component'		-- component_tcl
+);
