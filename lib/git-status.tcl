@@ -21,12 +21,35 @@ set debug 0
 set user_id [auth::require_login]
 set release_url "/intranet-git-releases/release"
 
+
+# ----------------------------------------------------
+# Get customer package version
+# ----------------------------------------------------
+
+set customer_package_key ""
+set customer_package_version ""
+set custom_package_version_sql "
+	select	package_key as customer_package_key,
+		version_name as customer_package_version
+	from	apm_package_versions
+	where	version_id in (
+		    select max(version_id)
+		    from   apm_package_versions
+		    where  package_key like 'intranet-cust-%' and
+		    	   enabled_p = 't'
+        )
+"
+db_0or1row custom_packages $custom_package_version_sql
+
+
+# ----------------------------------------------------
+# Get release history
+# ----------------------------------------------------
+
 set root_dir [acs_root_dir]
 set packages_dir "$root_dir/packages"; # no trailing /
 # No permissions here, set perms on portlet
 
-
-# ----------------------------------------------------
 # Create a "multirow" to show the results
 multirow create releases_multirow date hash author notes view_url details debug
 

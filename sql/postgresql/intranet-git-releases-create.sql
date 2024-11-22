@@ -9,7 +9,7 @@
 -- GIT status
 SELECT im_component_plugin__new (
 	null, 'im_component_plugin', now(), null, null, null,
-	'GIT Releases',				-- plugin_name
+	']po[ Home Released Versions',		-- plugin_name
 	'intranet-git-releases',		-- package_name
 	'bottom',				-- location
 	'/intranet/index',			-- page_url
@@ -21,7 +21,7 @@ SELECT im_component_plugin__new (
 
 SELECT im_component_plugin__new (
 	null, 'im_component_plugin', now(), null, null, null,
-	']po[ Version',				-- plugin_name
+	']po[ Released Versions',		-- plugin_name
 	'intranet-git-releases',		-- package_name
 	'bottom',				-- location
 	'/index',				-- page_url

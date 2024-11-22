@@ -1,11 +1,22 @@
+<p>
+This portlet shows the last released changes to ]project-open[ together with 
+release date and the included change tickets.
+</p>
+
+<ul>
+<li>]po[ Core Version: <%= [im_core_version] %></li>
+<if @customer_package_key@ ne "">
+<li>@customer_package_key@: @customer_package_version@</li>
+</if>
+</ul>
 	<table class="table_list_page">
 	<thead>	  
 	  <tr class="rowtitle">
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Date "Date"] %></td>
-	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Hash "Hash"] %></td>
+	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_ID "ID"] %></td>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Release "Release"] %></td>
 
-<if @show_commits_p eq 1>
+<if @show_commits_p@ eq 1>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Included_Commits "Included Commits"] %></td>
 <if @debug@ eq 1>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Debug "Debug"] %></td>
@@ -20,7 +31,7 @@
 		<td valign=top style='white-space: nowrap;'><a href="@releases_multirow.view_url@">@releases_multirow.date@</a></td>
 		<td valign=top>@releases_multirow.hash@</td>
 		<td valign=top>@releases_multirow.notes;noquote@</td>
-<if @show_commits_p eq 1>
+<if @show_commits_p@ eq 1>
 		<td valign=top>@releases_multirow.details;noquote@</td>
 <if @debug@ eq 1>
 		<td valign=top>@releases_multirow.debug@</td>
