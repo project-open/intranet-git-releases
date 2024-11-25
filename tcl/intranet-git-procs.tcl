@@ -35,6 +35,48 @@ ad_proc -public im_git_releases_component {
 # Procedures to process GIT
 # ---------------------------------------------------------------------
 
+
+ad_proc im_git_parse_cust_package_version {
+    -package_key
+    -commit_hash
+    {-debug_p 1}
+} {
+    Runs git show $hash:$info_file, extracts the version line of the package
+    <version name="5.1.0.0.3" url="http://www.project-open.net/download/apm/intranet-cust-cosine-5.1.0.0.3.apm">
+    and returns the version.
+} {
+    if {$debug_p} { ns_log Notice "im_git_parse_cust_package_version -package_key $package_key -commit_hash $commit_hash" }
+
+    set root_dir [acs_root_dir]
+    set repo_path "$root_dir/packages/$package_key"
+    set info_file "$package_key.info"
+
+    set git_cmd "git show $commit_hash:$info_file"
+    if {$debug_p} { ns_log Notice "im_git_parse_cust_package_version: git_cmd='cd $repo_path; $git_cmd'" }
+
+    set output ""
+    if {[catch {
+	set output [im_exec bash -c "cd $repo_path; $git_cmd"]
+    } err_msg]} {
+	return $err_msg
+    }
+
+    set version ""
+    set cnt 0
+    foreach line [split $output "\n"] {
+	if {$debug_p} { ns_log Notice "im_git_parse_cust_package_version: #$cnt: line=$line" }
+
+	if {[regexp {version name=\"([0-9a-z\.]+)\"} $line match v]} {
+	    set version $v
+	    break
+	}
+	incr cnt
+    }    
+
+    return $version
+}
+
+
 ad_proc im_git_parse_commit_log {
     -repo_path
     {-from_hash ""}

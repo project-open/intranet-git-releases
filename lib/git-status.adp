@@ -14,6 +14,7 @@ release date and the included change tickets.
 	  <tr class="rowtitle">
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Date "Date"] %></td>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_ID "ID"] %></td>
+	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_New_Version "New Version"] %></td>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Release "Release"] %></td>
 
 <if @show_commits_p@ eq 1>
@@ -30,6 +31,7 @@ release date and the included change tickets.
 	    <else><tr class="rowodd"></else>
 		<td valign=top style='white-space: nowrap;'><a href="@releases_multirow.view_url@">@releases_multirow.date@</a></td>
 		<td valign=top>@releases_multirow.hash@</td>
+		<td valign=top>@releases_multirow.cust_version@</td>
 		<td valign=top>@releases_multirow.notes;noquote@</td>
 <if @show_commits_p@ eq 1>
 		<td valign=top>@releases_multirow.details;noquote@</td>

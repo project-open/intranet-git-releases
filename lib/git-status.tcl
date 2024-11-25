@@ -51,7 +51,7 @@ set packages_dir "$root_dir/packages"; # no trailing /
 # No permissions here, set perms on portlet
 
 # Create a "multirow" to show the results
-multirow create releases_multirow date hash author notes view_url details debug
+multirow create releases_multirow date hash cust_version author notes view_url details debug
 
 # get a list of hash-lists for each release
 set release_vars {commit_hash commit_hash_short commitdate_iso author author_quoted commit commitdate comment}
@@ -88,6 +88,8 @@ while {$ctr <= $max_entries} {
     # foreach var $release_vars { append details "<li>$var: $release_h($var)\n" }
 
     # Get the difference between each two releases
+    set cust_version ""
+    set included_versions [list]
     if {"" ne $next_release} {
 	set next_release_hash $next_release_h(commit_hash)
 	set next_release_comment $next_release_h(comment)
@@ -102,6 +104,10 @@ while {$ctr <= $max_entries} {
 	    set pack_from_hash [lindex $package_diff 1]
 	    set pack_to_hash [lindex $package_diff 2]
 
+	    set pack_version [im_git_parse_cust_package_version -package_key $pack -commit_hash $pack_to_hash]
+	    if {$pack eq $customer_package_key} { set cust_version $pack_version }
+	    lappend included_versions [list $pack $pack_version]
+
 	    set repo_path "$root_dir/packages/$pack";
 	    ns_log Notice "git-status: im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash"
 	    set pack_logs [util_memoize [list im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash]]
@@ -115,8 +121,17 @@ while {$ctr <= $max_entries} {
 	    }
 	}
 
+	set version "$customer_package_key:$cust_version"
+	if {"" eq $cust_version} {
+	    set version_list [list]
+	    foreach v $included_versions {
+		lappend version_list "[lindex $v 0]:[lindex $v 1]"
+	    }
+	    set version [join $version_list ", "]
+	}
+
 	set url [export_vars -base $release_url {release_hash}]
-	multirow append releases_multirow $commitdate_iso $commit_hash_short $author $release_comment $url $details $next_release
+	multirow append releases_multirow $commitdate_iso $commit_hash_short $version $author $release_comment $url $details $next_release
     }
 }
 
