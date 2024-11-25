@@ -1,10 +1,13 @@
 <p>
-This portlet shows the last released changes to ]project-open[ together with 
-release date and the included change tickets.
+<%= [lang::message::lookup "" intranet-git-releases.Portlet_shows_changes_to_core_and_cust "
+This portlet shows the last released changes to \]project-open\[ together with 
+release date and the included change tickets."] %>
+<br>
+<%= [lang::message::lookup "" intranet-git-releases.Currently_installed_versions "Currently installed versions"] %>:
 </p>
 
 <ul>
-<li>]po[ Core Version: <%= [im_core_version] %></li>
+<li><%= [lang::message::lookup "" intranet-git-releases.PO_Core_version "\]po\[ Core Version"] %>: <%= [im_core_version] %></li>
 <if @customer_package_key@ ne "">
 <li>@customer_package_key@: @customer_package_version@</li>
 </if>
@@ -12,8 +15,8 @@ release date and the included change tickets.
 	<table class="table_list_page">
 	<thead>	  
 	  <tr class="rowtitle">
-	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Date "Date"] %></td>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_ID "ID"] %></td>
+	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Date "Date"] %></td>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_New_Version "New Version"] %></td>
 	    <td><%= [lang::message::lookup "" intranet-git-releases.Git_Release "Release"] %></td>
 
@@ -29,8 +32,8 @@ release date and the included change tickets.
 	  <multiple name="releases_multirow">
 	    <if @releases_multirow.rownum@ odd><tr class="roweven"></if>
 	    <else><tr class="rowodd"></else>
-		<td valign=top style='white-space: nowrap;'><a href="@releases_multirow.view_url@">@releases_multirow.date@</a></td>
 		<td valign=top>@releases_multirow.hash@</td>
+		<td valign=top style='white-space: nowrap;'><a href="@releases_multirow.view_url@">@releases_multirow.date@</a></td>
 		<td valign=top>@releases_multirow.cust_version@</td>
 		<td valign=top>@releases_multirow.notes;noquote@</td>
 <if @show_commits_p@ eq 1>

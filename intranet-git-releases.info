@@ -10,7 +10,7 @@
     <inherit-templates-p>f</inherit-templates-p>
     <auto-mount>intranet-git-releases</auto-mount>
 
-    <version name="5.1.0.0.1" url="http://openacs.org/repository/download/apm/intranet-git-releases-5.1.0.0.1.apm">
+    <version name="5.1.0.0.2" url="http://openacs.org/repository/download/apm/intranet-git-releases-5.1.0.0.2.apm">
         <owner url="mailto:frank.bergmann@project-open.com">Frank Bergmann</owner>
         <summary>Uses Git to manage ]po[ releases</summary>
         <vendor url="https://www.project-open.com/">]project-open[</vendor>
