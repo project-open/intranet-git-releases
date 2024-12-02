@@ -1,3 +1,4 @@
+<if 0 ne @user_id@>
 <p>
 <%= [lang::message::lookup "" intranet-git-releases.Portlet_shows_changes_to_core_and_cust "
 This portlet shows the last released changes to \]project-open\[ together with 
@@ -56,3 +57,4 @@ release date and the included change tickets."] %>
 
 	</tbody>
 	</table>
+</if>
