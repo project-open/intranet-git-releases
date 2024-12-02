@@ -18,7 +18,7 @@
 #	show_commits_p Show the 4th column with detailed commit information?
 
 set debug 0
-set user_id [auth::require_login]
+set user_id [ad_conn untrusted_user_id]
 set release_url "/intranet-git-releases/release"
 
 
