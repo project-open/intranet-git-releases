@@ -17,11 +17,41 @@ ad_proc -public im_git_releases_component {
     {-max_entries 8}
     {-show_commits_p 0}
 } {
+    Cached version of im_git_releases_component_helper.
+} {
+    ns_log Notice "im_git_releases_component -max_entries $max_entries -show_commits_p $show_commits_p"
+    set timeout 36000
+    set cache_keys [ns_cache names util_memoize]
+    set command [list im_git_releases_component_helper -max_entries $max_entries -show_commits_p $show_commits_p]
+    set found_in_cache_p [util_memoize_cached_p $command $timeout]
+    ns_log Notice "im_git_releases_component -max_entries $max_entries -show_commits_p $show_commits_p: found_in_cache_p=$found_in_cache_p"
+    if {$found_in_cache_p} {
+	return [util_memoize $command $timeout]
+    } else {
+	return "
+	       <p>Processing data, please reload page to see version and change history</p>
+
+		<script type='text/javascript' nonce='[im_csp_nonce]'>
+		window.addEventListener('load', function() {
+		    var xmlHttp1=new XMLHttpRequest();    
+		    xmlHttp1.open('GET','/intranet-git-releases/warm-release-cache',true);
+		    xmlHttp1.send(null);
+		});
+		</script>
+	"
+    }
+}
+
+ad_proc -public im_git_releases_component_helper {
+    {-max_entries 8}
+    {-show_commits_p 0}
+} {
     Checks the GIT status of the current server.
     Assumes that the /packages/ folder is a GIT repo
     with the ]po[ packages as submodules.
     @param max_entries Limit the number of entries in the portlet
 } {
+    ns_log Notice "im_git_releases_component_helper -max_entries $max_entries -show_commits_p $show_commits_p"
     set params [list \
 		    [list max_entries $max_entries] \
 		    [list show_commits_p $show_commits_p] \
