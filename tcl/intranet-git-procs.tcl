@@ -69,7 +69,7 @@ ad_proc -public im_git_releases_component_helper {
 ad_proc im_git_parse_cust_package_version {
     -package_key
     -commit_hash
-    {-debug_p 1}
+    {-debug_p 0}
 } {
     Runs git show $hash:$info_file, extracts the version line of the package
     <version name="5.1.0.0.3" url="http://www.project-open.net/download/apm/intranet-cust-cosine-5.1.0.0.3.apm">
@@ -112,7 +112,7 @@ ad_proc im_git_parse_commit_log {
     {-from_hash ""}
     {-to_hash ""}
     {-limit 10}
-    {-debug_p 1}
+    {-debug_p 0}
 } {
     Runs "git log" in the repo_path and returns a list of hash-lists 
     with information about the commits in the repo. 
@@ -150,12 +150,12 @@ ad_proc im_git_parse_commit_log {
     set from_cmd ""; if {"" ne $from_hash} { set from_cmd $from_hash }
     set to_cmd ""; if {"" ne $to_hash} { set to_cmd "..$to_hash" }
 
-    ns_log Notice "im_git_parse_commit_log: repo_path=$repo_path, from=$from_hash, to=$to_hash"
+    if {$debug_p} { ns_log Notice "im_git_parse_commit_log: repo_path=$repo_path, from=$from_hash, to=$to_hash" }
     set git_cmd "git log $limit_cmd --format=fuller --no-merges --no-decorate --date=iso8601 $from_cmd$to_cmd"
-    ns_log Notice "im_git_parse_commit_log: git_cmd='cd $repo_path; $git_cmd'"
+    if {$debug_p} { ns_log Notice "im_git_parse_commit_log: git_cmd='cd $repo_path; $git_cmd'" }
     set output [im_exec bash -c "cd $repo_path; $git_cmd"]
     append output "\ncommit end"
-    ns_log Notice "im_git_parse_commit_log: output:\nim_git_parse_commit_log: output: [join [split $output "\n"] "\nim_git_parse_commit_log: output: "]"
+    if {$debug_p} { ns_log Notice "im_git_parse_commit_log: output:\nim_git_parse_commit_log: output: [join [split $output "\n"] "\nim_git_parse_commit_log: output: "]" }
     if {$debug_p} { ns_log Notice "im_git_parse_commit_log: output=\n$output" }
     set release_hash_list [list]
     set release_comment ""
@@ -235,7 +235,7 @@ ad_proc im_git_parse_commit_log {
 
 	# --------------------------------------------------------------------
 	# Process some of the entries
-	ns_log Notice "im_git_parse_commit_log: #$cnt: token=$token"
+        if {$debug_p} { ns_log Notice "im_git_parse_commit_log: #$cnt: token=$token" }
 	switch [string tolower $token] {
 	    "commit_hash" {
 		# Set short version of the hash
@@ -271,7 +271,7 @@ ad_proc im_git_parse_submodule_diff {
     -repo_path
     -from_hash
     -to_hash
-    {-debug_p 1}
+    {-debug_p 0}
 } {
     Gets the difference between two releases in terms of submodules.
     Runs "git diff $from_hash $to_hash" in the packages repo in order
@@ -303,9 +303,9 @@ ad_proc im_git_parse_submodule_diff {
 } {
     set results [list]
     set git_cmd "git diff $from_hash $to_hash"
-    ns_log Notice "im_git_parse_submodule_diff: git_cmd=$git_cmd"
+    if {$debug_p} { ns_log Notice "im_git_parse_submodule_diff: git_cmd=$git_cmd" }
     set output [im_exec bash -c "cd $repo_path; $git_cmd"]
-    ns_log Notice "im_git_parse_submodule_diff: output=\n$output"
+    if {$debug_p} { ns_log Notice "im_git_parse_submodule_diff: output=\n$output" }
 
     set pack ""
     set pack_from_hash ""

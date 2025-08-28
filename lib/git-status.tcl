@@ -67,7 +67,7 @@ while {$ctr <= $max_entries} {
     if {0 == [llength $release]} { break }
     set next_release [lindex $releases_lohl [expr $ctr + 1]]
     incr ctr
-    ns_log Notice "git-status: ctr=$ctr, release=$release, next_release=$next_release"
+    if {$debug} { ns_log Notice "git-status: ctr=$ctr, release=$release, next_release=$next_release" }
 
     array unset release_h
     array unset next_release_h
@@ -109,9 +109,9 @@ while {$ctr <= $max_entries} {
 	    lappend included_versions [list $pack $pack_version]
 
 	    set repo_path "$root_dir/packages/$pack";
-	    ns_log Notice "git-status: im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash"
+	    if {$debug} { ns_log Notice "git-status: im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash" }
 	    set pack_logs [util_memoize [list im_git_parse_commit_log -repo_path $repo_path -from_hash $pack_from_hash -to_hash $pack_to_hash]]
-	    ns_log Notice "git-status: im_git_parse_commit_log: $pack_logs"
+	    if {$debug} { ns_log Notice "git-status: im_git_parse_commit_log: $pack_logs" }
 	    foreach pack_log $pack_logs {
 		array unset log_hash
 		array set log_hash $pack_log
